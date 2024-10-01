@@ -14,10 +14,31 @@ fun main(){
         )
     )
 
-    tc.printData()
+    printData(tc)
 
     println()
-    tc.createInitialPlan()
 
-    tc.printPlan()
+    val pm = createInitialPlan(tc)
+    printData(tc, true)
+
+    val pr = improvePlan(tc, pm)
+
+    println()
+    println(pr.first.joinToString())
+    println(pr.second.joinToString())
+
+
+
+//
+//    tc.printData()
+//
+//    println()
+//    tc.createInitialPlan()
+//
+//    tc.printData(true)
+//
+//    tc.improvePlan()
+//
+
+
 }

@@ -19,26 +19,19 @@ fun main(){
     println()
 
     val pm = createInitialPlan(tc)
-    printData(tc, true)
+    for(m in pm){
+        println(m.joinToString(" "))
+    }
 
-    val pr = improvePlan(tc, pm)
+    val (u, v) = createPotentials(tc, pm)
 
     println()
-    println(pr.first.joinToString())
-    println(pr.second.joinToString())
+    println(u.joinToString(" "))
+    println(v.joinToString(" "))
 
 
-
-//
-//    tc.printData()
-//
-//    println()
-//    tc.createInitialPlan()
-//
-//    tc.printData(true)
-//
-//    tc.improvePlan()
-//
-
-
+    val newPlan = improvePlan(tc, pm, u, v)
+    for(m in newPlan){
+        println(m.joinToString(" "))
+    }
 }

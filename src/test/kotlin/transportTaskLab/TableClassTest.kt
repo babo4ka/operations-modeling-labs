@@ -3,7 +3,6 @@ package transportTaskLab
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 import kotlin.system.measureTimeMillis
-import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 
@@ -38,7 +37,7 @@ class TableClassTest{
     fun testFirstPotentials(){
         val planMatrix = createInitialPlan(tc)
 
-        val firstPotentials = improvePlan(tc, planMatrix)
+        val firstPotentials = createPotentials(tc, planMatrix)
 
 
 

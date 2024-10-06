@@ -1,5 +1,6 @@
 package transportTaskLab
 
+import kotlin.math.abs
 import kotlin.math.min
 
 
@@ -119,40 +120,51 @@ fun createPotentials(tc:TableClass, planMatrix:MutableList<MutableList<Int>>,
 
 fun isOptimal(tc:TableClass, planMatrix:MutableList<MutableList<Int>>,
                u:IntArray, v:IntArray,
-              m:Int = planMatrix.size, n:Int = planMatrix[0].size):Boolean{
+              m:Int = planMatrix.size, n:Int = planMatrix[0].size):Pair<Boolean, Pair<Int, Int>>{
+
+    var optimal = true
+    var maxVal = 0
+    var max = Pair(0, 0)
 
     for(i in 0..<m){
         for(j in 0..<n){
-            if(planMatrix[i][j] > 0 && (u[i] + v[j] > tc.tariffMatrix[i][j])){
-                return false
+            if((u[i] + v[j] > tc.tariffMatrix[i][j])){
+                //println("sum ${u[i] + v[j]} cost ${tc.tariffMatrix[i][j]}  i $i j $j")
+                optimal = false
+                if(u[i] + v[j] > maxVal){
+                    maxVal = u[i] + v[j]
+                    max = Pair(i, j)
+                }
             }
         }
     }
 
-    return true
+    return Pair(optimal, max)
 }
 
-fun improvePlan(tc:TableClass, planMatrix:MutableList<MutableList<Int>>,
-                u:IntArray, v:IntArray,
+fun improvePlan(//tc:TableClass,
+                planMatrix:MutableList<MutableList<Int>>,
+                //u:IntArray, v:IntArray,
+                start:Pair<Int,Int>,
                 m:Int = planMatrix.size, n:Int = planMatrix[0].size): MutableList<MutableList<Int>>{
 
-    val cycle = mutableListOf<Pair<Int, Int>>()
+    val cycle = mutableListOf(start)
     val marked = Array(m + n) {false}
 
-    outer@ for(i in 0..<m){
-        for(j in 0..<n){
-            if(planMatrix[i][j] >= 0){
-                cycle.add(i to j)
-                marked[i] = true
-                break@outer
-            }
-        }
-    }
+//    outer@ for(i in 0..<m){
+//        for(j in 0..<n){
+//            if(planMatrix[i][j] >= 0){
+//                cycle.add(i to j)
+//                marked[i] = true
+//                break@outer
+//            }
+//        }
+//    }
 
-    for(i in cycle){
-        println(i)
-    }
-    println("^before")
+//    for(i in cycle){
+//        println(i)
+//    }
+//    println("^before")
 
     while(true){
         var found = false
@@ -160,19 +172,19 @@ fun improvePlan(tc:TableClass, planMatrix:MutableList<MutableList<Int>>,
         val currCycle = cycle.toList()
 
         for(cycleItem in currCycle){
-            if(cycleItem.first < m){
+            if(cycleItem.first < m-1){
                 for(j in 0..<n){
-                    if(!marked[cycleItem.first+j] && planMatrix[cycleItem.first][j] >= 0){
-                        cycle.add(cycleItem.first + j to cycleItem.first)
-                        marked[cycleItem.first + j] = true
+                    if(!marked[m+j] && planMatrix[cycleItem.first][j] >= 0){
+                        cycle.add(j to cycleItem.first)
+                        marked[m + j] = true
                         found = true
                     }
                 }
             }else{
-                val rowId = cycleItem.first - m
+                val rowId = abs( cycleItem.first - m)
                 for(j in 0..<m){
-                    if(!marked[j] && planMatrix[j][rowId] >= 0){
-                        cycle.add(j to rowId)
+                    if(!marked[j] && planMatrix[rowId][j] >= 0){
+                        cycle.add(rowId to j)
                         marked[j] = true
                         found = true
                     }
@@ -189,10 +201,14 @@ fun improvePlan(tc:TableClass, planMatrix:MutableList<MutableList<Int>>,
     }
 
 
-
-    val minTransport = cycle.map {
+    val filtered = cycle.map {
         planMatrix[it.first][it.second]
-    }.minOrNull() ?: 0
+    }.toMutableList()
+
+    filtered.removeAll { it == -1 }
+
+    val minTransport = filtered.minOrNull() ?: 0
+
 
     for(i in cycle.indices){
         val (x, y) = cycle[i]

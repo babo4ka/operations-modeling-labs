@@ -149,73 +149,99 @@ fun improvePlan(//tc:TableClass,
                 m:Int = planMatrix.size, n:Int = planMatrix[0].size): MutableList<MutableList<Int>>{
 
     val cycle = mutableListOf(start)
-    val marked = Array(m + n) {false}
 
-//    outer@ for(i in 0..<m){
-//        for(j in 0..<n){
-//            if(planMatrix[i][j] >= 0){
-//                cycle.add(i to j)
-//                marked[i] = true
-//                break@outer
-//            }
-//        }
-//    }
+    val (startRow, startCol) = start
 
-//    for(i in cycle){
-//        println(i)
-//    }
-//    println("^before")
 
-    while(true){
-        var found = false
+    var row = startRow
+    var col = startCol
 
-        val currCycle = cycle.toList()
+    val marked = Array(m) { BooleanArray(n) {false} }
 
-        for(cycleItem in currCycle){
-            if(cycleItem.first < m-1){
-                for(j in 0..<n){
-                    if(!marked[m+j] && planMatrix[cycleItem.first][j] >= 0){
-                        cycle.add(j to cycleItem.first)
-                        marked[m + j] = true
-                        found = true
-                    }
-                }
-            }else{
-                val rowId = abs( cycleItem.first - m)
-                for(j in 0..<m){
-                    if(!marked[j] && planMatrix[rowId][j] >= 0){
-                        cycle.add(rowId to j)
-                        marked[j] = true
-                        found = true
-                    }
+    while(cycle.size < 4){
+        if(row == startRow){
+            for(i in 0..<m){
+                if(!marked[i][col] && planMatrix[i][col] > 0){
+                    cycle.add(i to col)
+                    marked[i][col] = true
+                    row = i
+                    col = startCol
+                    break
                 }
             }
         }
 
+        if(col == startCol){
+            for(j in 0..<n){
+                if(!marked[row][j] && planMatrix[row][j] > 0){
+                    cycle.add(row to j)
+                    marked[row][j] = true
+                    col = j
+                    row = startRow
+                    break
+                }
+            }
+        }
 
-
-        if(!found) break
     }
+
+
+//    while(true){
+//        var found = false
+//
+//        val currCycle = cycle.toList()
+//
+//        for(cycleItem in currCycle){
+//            if(cycleItem.first < m-1){
+//                for(j in 0..<n){
+//                    if(!marked[cycleItem.first+j] && planMatrix[cycleItem.first][j] >= 0){
+//                        cycle.add(cycleItem.first to j)
+//                        marked[cycleItem.first + j] = true
+//                        found = true
+//                    }
+//                }
+//            }else{
+//                val rowId = abs( cycleItem.first - m)
+//                for(j in 0..<m){
+//                    if(!marked[j] && planMatrix[rowId][j] >= 0){
+//                        cycle.add(rowId to j)
+//                        marked[j] = true
+//                        found = true
+//                    }
+//                }
+//            }
+//        }
+//
+//
+//
+//        if(!found) break
+//    }
     for(i in cycle){
         println(i)
     }
 
 
-    val filtered = cycle.map {
+    var filtered = cycle.mapIndexed {id, it ->
         planMatrix[it.first][it.second]
     }.toMutableList()
 
+
+    filtered = filtered.filterIndexed { id, i -> id % 2 != 0 }.toMutableList()
     filtered.removeAll { it == -1 }
 
     val minTransport = filtered.minOrNull() ?: 0
 
-
     for(i in cycle.indices){
         val (x, y) = cycle[i]
-        if(i % 2 == 0)
-            planMatrix[x][y] -= minTransport
-        else
+        if(i % 2 == 0) {
+            if(planMatrix[x][y] == -1 )planMatrix[x][y] += 1
             planMatrix[x][y] += minTransport
+
+        }
+        else
+            planMatrix[x][y] -= minTransport
+
+        if(planMatrix[x][y] == 0) planMatrix[x][y] = -1
     }
 
     return planMatrix

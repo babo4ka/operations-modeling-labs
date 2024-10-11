@@ -1,8 +1,5 @@
 package transportTaskLab
 
-import kotlin.math.abs
-import kotlin.math.min
-
 
 const val stockWord = "Запасы"
 const val needsWord = "Потребность"
@@ -150,72 +147,47 @@ fun improvePlan(//tc:TableClass,
 
     val cycle = mutableListOf(start)
 
-    val (startRow, startCol) = start
 
+    fun searchCycle(point:Pair<Int, Int>, searchBy:String = "row"):Boolean{
+        val (row, col) = point
 
-    var row = startRow
-    var col = startCol
-
-    val marked = Array(m) { BooleanArray(n) {false} }
-
-    while(cycle.size < 4){
-        if(row == startRow){
+        if(searchBy == "row"){
             for(i in 0..<m){
-                if(!marked[i][col] && planMatrix[i][col] > 0){
-                    cycle.add(i to col)
-                    marked[i][col] = true
-                    row = i
-                    col = startCol
-                    break
+                if((i to col) == start) {
+                    cycle.add(point)
+                    return true
+                }
+                if((i to col) != point && planMatrix[i][col] >= 0){
+                    val isPart = searchCycle((i to col), "col")
+                    if(isPart){
+                        if(point != start) cycle.add(point)
+                        return true
+                    }
                 }
             }
-        }
-
-        if(col == startCol){
+        }else if(searchBy == "col"){
             for(j in 0..<n){
-                if(!marked[row][j] && planMatrix[row][j] > 0){
-                    cycle.add(row to j)
-                    marked[row][j] = true
-                    col = j
-                    row = startRow
-                    break
+                if((row to j) == start) {
+                    cycle.add(point)
+                    return true
+                }
+                if((row to j) != point && planMatrix[row][j] >= 0){
+                    val isPart = searchCycle((row to j), "row")
+                    if(isPart){
+                        if(point != start) cycle.add(point)
+                        return true
+                    }
                 }
             }
         }
 
+
+        return false
     }
 
+    searchCycle(start)
 
-//    while(true){
-//        var found = false
-//
-//        val currCycle = cycle.toList()
-//
-//        for(cycleItem in currCycle){
-//            if(cycleItem.first < m-1){
-//                for(j in 0..<n){
-//                    if(!marked[cycleItem.first+j] && planMatrix[cycleItem.first][j] >= 0){
-//                        cycle.add(cycleItem.first to j)
-//                        marked[cycleItem.first + j] = true
-//                        found = true
-//                    }
-//                }
-//            }else{
-//                val rowId = abs( cycleItem.first - m)
-//                for(j in 0..<m){
-//                    if(!marked[j] && planMatrix[rowId][j] >= 0){
-//                        cycle.add(rowId to j)
-//                        marked[j] = true
-//                        found = true
-//                    }
-//                }
-//            }
-//        }
-//
-//
-//
-//        if(!found) break
-//    }
+    println("cycle: ")
     for(i in cycle){
         println(i)
     }

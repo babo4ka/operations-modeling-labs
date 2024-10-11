@@ -32,15 +32,17 @@ fun main(){
     var (optimal, max) = isOptimal(tc, pm, u, v)
 
     println("first $optimal $max")
-
-    while(!optimal){
+    var i = 0
+    while(!optimal && i < 2){
         pm = improvePlan(pm, max)
-        break
+        //break
         val (u, v) = createPotentials(tc, pm)
         val (o, m) = isOptimal(tc, pm, u, v)
         optimal = o
         max = m
-        println(optimal)
+        println("$optimal $max ${u.joinToString(" ")} ${v.joinToString(" ")}")
+
+        i++
     }
 
     //val newPlan = improvePlan(tc, pm, u, v)

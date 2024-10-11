@@ -153,7 +153,7 @@ fun improvePlan(//tc:TableClass,
 
         if(searchBy == "row"){
             for(i in 0..<m){
-                if((i to col) == start) {
+                if((i to col) == start && (i to col) != point) {
                     cycle.add(point)
                     return true
                 }
@@ -167,7 +167,7 @@ fun improvePlan(//tc:TableClass,
             }
         }else if(searchBy == "col"){
             for(j in 0..<n){
-                if((row to j) == start) {
+                if((row to j) == start && (row to j) != point) {
                     cycle.add(point)
                     return true
                 }
@@ -209,11 +209,17 @@ fun improvePlan(//tc:TableClass,
             if(planMatrix[x][y] == -1 )planMatrix[x][y] += 1
             planMatrix[x][y] += minTransport
 
-        }
-        else
+        } else {
             planMatrix[x][y] -= minTransport
+            if(planMatrix[x][y] == 0) planMatrix[x][y] = -1
+        }
 
-        if(planMatrix[x][y] == 0) planMatrix[x][y] = -1
+
+    }
+
+
+    for(p in planMatrix){
+        println(p.joinToString(" "))
     }
 
     return planMatrix

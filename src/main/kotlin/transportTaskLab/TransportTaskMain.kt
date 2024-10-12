@@ -19,33 +19,22 @@ fun main(){
     println()
 
     var pm = createInitialPlan(tc)
-    for(m in pm){
-        println(m.joinToString(" "))
-    }
+    printPlan(pm)
 
     val (u, v) = createPotentials(tc, pm)
 
-    println()
-    println(u.joinToString(" "))
-    println(v.joinToString(" "))
 
     var (optimal, max) = isOptimal(tc, pm, u, v)
 
-    println("first $optimal $max")
     while(!optimal){
         pm = improvePlan(pm, max)
-        //break
         val (u, v) = createPotentials(tc, pm)
         val (o, m) = isOptimal(tc, pm, u, v)
         optimal = o
         max = m
-        println("$optimal $max ${u.joinToString(" ")} ${v.joinToString(" ")}")
-
     }
 
-    //val newPlan = improvePlan(tc, pm, u, v)
+    printPlan(pm)
 
-    for(m in pm){
-        println(m.joinToString(" "))
-    }
+    println(finalCost(pm, tc))
 }

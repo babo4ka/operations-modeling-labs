@@ -126,7 +126,6 @@ fun isOptimal(tc:TableClass, planMatrix:MutableList<MutableList<Int>>,
     for(i in 0..<m){
         for(j in 0..<n){
             if((u[i] + v[j] > tc.tariffMatrix[i][j])){
-                //println("sum ${u[i] + v[j]} cost ${tc.tariffMatrix[i][j]}  i $i j $j")
                 optimal = false
                 if(u[i] + v[j] > maxVal){
                     maxVal = u[i] + v[j]
@@ -139,14 +138,11 @@ fun isOptimal(tc:TableClass, planMatrix:MutableList<MutableList<Int>>,
     return Pair(optimal, max)
 }
 
-fun improvePlan(//tc:TableClass,
-                planMatrix:MutableList<MutableList<Int>>,
-                //u:IntArray, v:IntArray,
+fun improvePlan(planMatrix:MutableList<MutableList<Int>>,
                 start:Pair<Int,Int>,
                 m:Int = planMatrix.size, n:Int = planMatrix[0].size): MutableList<MutableList<Int>>{
 
     val cycle = mutableListOf(start)
-
 
     fun searchCycle(point:Pair<Int, Int>, searchBy:String = "row"):Boolean{
         val (row, col) = point
@@ -187,10 +183,10 @@ fun improvePlan(//tc:TableClass,
 
     searchCycle(start)
 
-    println("cycle: ")
-    for(i in cycle){
-        println(i)
-    }
+//    println("cycle: ")
+//    for(i in cycle){
+//        println(i)
+//    }
 
 
     var filtered = cycle.mapIndexed {id, it ->
@@ -218,13 +214,28 @@ fun improvePlan(//tc:TableClass,
     }
 
 
-    for(p in planMatrix){
-        println(p.joinToString(" "))
-    }
-
     return planMatrix
 }
 
+fun finalCost(planMatrix: MutableList<MutableList<Int>>, tc: TableClass):Int{
+    var sum = 0
+    val tariffMatrix = tc.tariffMatrix
+
+    for (i in 0..<planMatrix.size){
+        for(j in 0..<planMatrix[0].size){
+            sum+= planMatrix[i][j] * tariffMatrix[i][j]
+        }
+    }
+    return sum
+}
+
+
+fun printPlan(pm:MutableList<MutableList<Int>>){
+    println("План перевозок: ")
+    for(m in pm){
+        println(m.joinToString(" "))
+    }
+}
 private fun printRepeatedly(str:String, length:Int, newLine:Boolean = true,
                             before:String = "", after:String = ""){
     if(newLine) println("$before${str.repeat(length)}$after")

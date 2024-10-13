@@ -14,27 +14,44 @@ fun main(){
         )
     )
 
-    printData(tc)
+    var it = 1
 
+    printData(tc)
+    println()
     println()
 
+    println("Итерация $it:")
     var pm = createInitialPlan(tc)
     printPlan(pm)
+    println()
 
     val (u, v) = createPotentials(tc, pm)
-
+    printPotentials(tc, pm, u, v)
+    println()
+    println()
 
     var (optimal, max) = isOptimal(tc, pm, u, v)
 
     while(!optimal){
+        it++
+
+        println("Итерация $it:")
         pm = improvePlan(pm, max)
+        printPlan(pm)
+        println()
+
         val (u, v) = createPotentials(tc, pm)
+        printPotentials(tc, pm, u, v)
+        println()
+        println()
+
         val (o, m) = isOptimal(tc, pm, u, v)
         optimal = o
         max = m
     }
 
+    println("Итоговый план перевозок:")
     printPlan(pm)
 
-    println(finalCost(pm, tc))
+    println("Итоговая цена: ${finalCost(pm, tc)}")
 }

@@ -3,8 +3,9 @@ package transportTaskLab
 
 const val stockWord = "Запасы"
 const val needsWord = "Потребность"
+const val potentialsWord = "Потенциалы"
 
-fun printData(tc:TableClass, planMatrix:MutableList<MutableList<Int>>? = null){
+fun printData(tc:TableClass){
     val lengths = mutableListOf<Int>()
     val tosMaxLength = mutableMapOf<Int, Int>()
     (tc.tos + mutableListOf(stockWord)).forEachIndexed { i, it ->
@@ -217,6 +218,27 @@ fun improvePlan(planMatrix:MutableList<MutableList<Int>>,
     return planMatrix
 }
 
+fun printPotentials(tc: TableClass, planMatrix: MutableList<MutableList<Int>>, u: IntArray, v: IntArray){
+    val lineLength = v.foldIndexed(potentialsWord.length) {id, acc, p -> acc + "v$id=${p}|".length}
+    print("$potentialsWord|")
+    for (i in v.indices){
+        print("v$i=${v[i]}|")
+    }
+    println()
+    printRepeatedly("=", lineLength)
+
+    val colLength = v.mapIndexed{id, it -> "v$id=${it}".length}
+
+    for(i in u.indices){
+        print("u$i=${u[i]}${" ".repeat(potentialsWord.length - ("u${i}=${u[i]}").length)}|")
+        for(j in planMatrix[0].indices){
+            print("${planMatrix[i][j]}${" ".repeat(colLength[j] - planMatrix[i][j].toString().length)}|")
+        }
+        println()
+        printRepeatedly("=", lineLength)
+    }
+}
+
 fun finalCost(planMatrix: MutableList<MutableList<Int>>, tc: TableClass):Int{
     var sum = 0
     val tariffMatrix = tc.tariffMatrix
@@ -232,9 +254,25 @@ fun finalCost(planMatrix: MutableList<MutableList<Int>>, tc: TableClass):Int{
 
 fun printPlan(pm:MutableList<MutableList<Int>>){
     println("План перевозок: ")
-    for(m in pm){
-        println(m.joinToString(" "))
+
+    val lengths = IntArray(pm[0].size){0}
+
+    pm.forEach {
+        it.forEachIndexed{id, it ->
+            if(it.toString().length > lengths[id])lengths[id] = it.toString().length
+        }
     }
+
+    val lineLength = lengths.fold(0){acc, len -> acc+len+1}
+
+    for(i in pm.indices){
+        for(j in pm[0].indices){
+            print("${pm[i][j]}${" ".repeat(lengths[j] - pm[i][j].toString().length)}|")
+        }
+        println()
+        printRepeatedly("_", lineLength)
+    }
+
 }
 private fun printRepeatedly(str:String, length:Int, newLine:Boolean = true,
                             before:String = "", after:String = ""){

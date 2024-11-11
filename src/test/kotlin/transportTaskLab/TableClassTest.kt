@@ -1,5 +1,6 @@
 package transportTaskLab
 
+import model_operations.transportTaskLab.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 import kotlin.system.measureTimeMillis

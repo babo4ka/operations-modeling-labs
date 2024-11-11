@@ -1,4 +1,4 @@
-package simplexLab
+package model_operations.simplexLab
 
 import org.jetbrains.kotlinx.dataframe.AnyFrame
 import org.jetbrains.kotlinx.dataframe.api.column

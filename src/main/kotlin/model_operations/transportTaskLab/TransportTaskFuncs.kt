@@ -1,11 +1,11 @@
-package transportTaskLab
+package model_operations.transportTaskLab
 
 
 const val stockWord = "Запасы"
 const val needsWord = "Потребность"
 const val potentialsWord = "Потенциалы"
 
-fun printData(tc:TableClass){
+fun printData(tc: TableClass){
     val lengths = mutableListOf<Int>()
     val tosMaxLength = mutableMapOf<Int, Int>()
     (tc.tos + mutableListOf(stockWord)).forEachIndexed { i, it ->
@@ -52,7 +52,7 @@ fun printData(tc:TableClass){
     print(tc.stocksAndNeedsSum)
 }
 
-fun createInitialPlan(tc:TableClass): MutableList<MutableList<Int>>{
+fun createInitialPlan(tc: TableClass): MutableList<MutableList<Int>>{
 
     val planMatrix = MutableList(tc.froms.size){MutableList(tc.tos.size){-1} }
 
@@ -85,7 +85,7 @@ fun createInitialPlan(tc:TableClass): MutableList<MutableList<Int>>{
 }
 
 
-fun createPotentials(tc:TableClass, planMatrix:MutableList<MutableList<Int>>,
+fun createPotentials(tc: TableClass, planMatrix:MutableList<MutableList<Int>>,
                      m:Int = planMatrix.size, n:Int = planMatrix[0].size) : Pair<IntArray, IntArray>{
     val u = IntArray(m){Int.MAX_VALUE}
     val v = IntArray(n){Int.MAX_VALUE}
@@ -114,8 +114,8 @@ fun createPotentials(tc:TableClass, planMatrix:MutableList<MutableList<Int>>,
     return u to v
 }
 
-fun isOptimal(tc:TableClass, planMatrix:MutableList<MutableList<Int>>,
-               u:IntArray, v:IntArray,
+fun isOptimal(tc: TableClass, planMatrix:MutableList<MutableList<Int>>,
+              u:IntArray, v:IntArray,
               m:Int = planMatrix.size, n:Int = planMatrix[0].size):Pair<Boolean, Pair<Int, Int>>{
 
     var optimal = true
@@ -217,7 +217,7 @@ fun improvePlan(planMatrix:MutableList<MutableList<Int>>,
 }
 
 fun printPotentials(tc: TableClass, planMatrix: MutableList<MutableList<Int>>, u: IntArray, v: IntArray){
-    val lineLength = v.foldIndexed(potentialsWord.length) {id, acc, p -> acc + "v$id=${p}|".length}
+    val lineLength = v.foldIndexed(potentialsWord.length) { id, acc, p -> acc + "v$id=${p}|".length}
     print("$potentialsWord|")
     for (i in v.indices){
         print("v$i=${v[i]}|")

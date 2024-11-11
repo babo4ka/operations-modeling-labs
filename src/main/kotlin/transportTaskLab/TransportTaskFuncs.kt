@@ -93,7 +93,6 @@ fun createPotentials(tc:TableClass, planMatrix:MutableList<MutableList<Int>>,
     u[0] = 0
 
     var changed = true
-    var a = 0
     while (changed) {
         changed = false
 
@@ -110,7 +109,6 @@ fun createPotentials(tc:TableClass, planMatrix:MutableList<MutableList<Int>>,
                 }
             }
         }
-        a++
     }
 
     return u to v

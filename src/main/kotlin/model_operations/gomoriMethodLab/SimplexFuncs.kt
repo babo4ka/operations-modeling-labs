@@ -10,8 +10,7 @@ fun createSimplexTable(z:DoubleArray, a:Array<Pair<DoubleArray, String>>, b:Doub
     val m = a.size // количество ограничений
     val n = z.size // количество переменных
 
-    val rowsWithArtificial = a.filter { it.second == ">=" }
-    val colsCount = rowsWithArtificial.size
+    val colsCount = a.filter { it.second == ">=" }.size
 
     var mainFunVal = 0.0
 
@@ -147,7 +146,6 @@ fun createNewConstraint(a: Array<DoubleArray>, basisIndices:MutableList<Int>):Ar
         }else{
             -(it - truncate(it)) - 1.0
         }
-
     }
 
 
@@ -240,7 +238,6 @@ fun main(){
         println(it.joinToString(" "))
     }
 
-    var i = 0
 
     while(!isAllBIntegers(table, basisVars.values.toMutableList())){
         table = createNewConstraint(table, basisVars.values.toMutableList())

@@ -5,7 +5,11 @@ import kotlin.math.abs
 import kotlin.math.truncate
 
 
-fun createSimplexTable(z:DoubleArray, a:Array<Pair<DoubleArray, String>>, b:DoubleArray):Pair<Array<DoubleArray>, Int>{
+var freeVars = mutableMapOf<String, Int>()
+val basisVars = mutableMapOf<String, Int>()
+var varsCount = 0
+
+fun createSimplexTable(z:DoubleArray, a:Array<Pair<DoubleArray, String>>, b:DoubleArray):Triple<Array<DoubleArray>, Int, MutableList<Int>>{
 
     val m = a.size // количество ограничений
     val n = z.size // количество переменных
@@ -33,8 +37,16 @@ fun createSimplexTable(z:DoubleArray, a:Array<Pair<DoubleArray, String>>, b:Doub
             artIndex++
             mainFunVal += b[i]
 
+            freeVars["x${varsCount+1}"] = freeVars.size
+            varsCount++
+            basisVars["x${freeVars.size+m}"] = i
+//            varsCount++
             artIndexes.add(i)
+        }else{
+            basisVars["x${varsCount+1}"] = i
+            varsCount++
         }
+
     }
 
     for(i in 0..<z.size){
@@ -43,7 +55,7 @@ fun createSimplexTable(z:DoubleArray, a:Array<Pair<DoubleArray, String>>, b:Doub
 
     table.last()[table[0].lastIndex] = mainFunVal
 
-    return table to artIndex
+    return Triple(table, artIndex, artIndexes)
 }
 
 fun chooseColumn(a:Array<DoubleArray>, goal:String = "min", zCount:Int):Int{
@@ -148,11 +160,16 @@ fun createNewConstraint(a: Array<DoubleArray>, basisIndices:MutableList<Int>):Ar
         }
     }
 
+    basisVars["x$varsCount"] = a.size-1
 
     return a.copyOfRange(0, a.lastIndex).plus(newRow.toDoubleArray()) + a.copyOfRange(a.size-1, a.size)
 }
 
 fun sliceTable(a:Array<DoubleArray>, count:Int):Array<DoubleArray>{
+
+    val newMap = freeVars.filter { !(0..<count).contains(it.value) }.toMutableMap()
+    freeVars = newMap
+
     return a.map{
         it.slice(count..<it.size).toDoubleArray()
     }.toTypedArray()
@@ -182,6 +199,41 @@ fun isInConstraints(constraints:Array<Pair<DoubleArray, String>>, answer:Mutable
     return allData.all { it }
 }
 
+fun printData(a:Array<DoubleArray>, basisVars:MutableMap<String, Int>, freeVars:MutableMap<String, Int>){
+    val maxl = mutableMapOf<Int, Int>()
+    a.forEachIndexed {id, it ->
+        it.forEachIndexed { index, el ->
+            val l = el.toString().length
+            if(maxl[index] == null){
+                maxl[index] = l
+            }else if(l > maxl[index]!!){
+                maxl[index] = l
+            }
+        }
+    }
+
+    freeVars["b"] = freeVars.size
+    basisVars["z"] = basisVars.size
+
+    val sortedfree = freeVars.toList().sortedBy { (_, v) -> v }.toMap()
+    val sortedBasis = basisVars.toList().sortedBy { (_, v) -> v }.toMap()
+
+    print("${" ".repeat(maxl[0]!!)}|")
+    sortedfree.keys.forEachIndexed { id, it ->
+        print("$it${" ".repeat(maxl[id]!! - it.length)}|")
+    }
+
+    println()
+    a.forEachIndexed {i, it->
+        print("${sortedBasis.keys.toList()[i]}${" ".repeat(maxl[i]!! - sortedBasis.keys.toList()[i].length)}|")
+        it.forEachIndexed { id, el ->
+            print("$el${" ".repeat(maxl[id]!! - el.toString().length)}|")
+        }
+        println()
+    }
+
+}
+
 fun main(){
     val a = arrayOf(
         Pair(doubleArrayOf(0.0, 2.0), ">="),
@@ -194,16 +246,25 @@ fun main(){
 
     val z = doubleArrayOf(3.0, 2.0)
 
-    val freeVars = mutableMapOf<String, Int>()
-    val basisVars = mutableMapOf<String, Int>()
-    z.forEachIndexed{ id, _ -> freeVars["x${id+1}"] = id}
 
-    var (table, artCount) = createSimplexTable(z, a, b)
+    z.forEachIndexed{ id, _ ->
+        freeVars["x${id+1}"] = id
+        varsCount++
+    }
+
+
+    var (table, artCount, artIds) = createSimplexTable(z, a, b)
+    freeVars.keys.forEach {
+        println("$it ${freeVars[it]}")
+    }
+
+    basisVars.keys.forEach{
+        println("$it ${basisVars[it]}")
+    }
+
 
     println("Начальная симплекс-таблица")
-    table.forEach {
-        println(it.joinToString(" "))
-    }
+    printData(table, basisVars, freeVars)
 
 
 
@@ -211,50 +272,55 @@ fun main(){
         val col = chooseColumn(table, "max", z.size)
         val row = chooseRow(table, b, col)
 
+        var keyToAdd = ""
         freeVars.keys.forEach{
             if(freeVars[it] == col){
-                basisVars[it] = row
-                freeVars.remove(it)
+                keyToAdd = it
+                //basisVars[it] = row
             }
+        }
+
+        var keyToCh = ""
+        basisVars.keys.forEach {
+            if(basisVars[it] == row){
+                keyToCh = it
+            }
+        }
+
+        if(keyToCh != "") {
+            basisVars.remove(keyToCh)
+            freeVars[keyToCh] = col
+        }
+
+        if(keyToAdd!= ""){
+            basisVars[keyToAdd] = row
+            freeVars.remove(keyToAdd)
         }
         println(row to col)
         table = makeSimplexStep(table, (row to col))
 
         println()
-        table.forEach {
-            println(it.joinToString(" "))
-        }
+        printData(table, basisVars, freeVars)
     }
 
-    println("Решённая задача без условия целочисленности")
-    table.forEach {
-        println(it.joinToString(" "))
-    }
+    println("Решённая задача без условия целочисленности:")
+    println()
+    printData(table, basisVars, freeVars)
 
     table = sliceTable(table, artCount)
 
     println("Обрезанная таблица")
-    table.forEach {
-        println(it.joinToString(" "))
-    }
+    printData(table, basisVars, freeVars)
 
 
     while(!isAllBIntegers(table, basisVars.values.toMutableList())){
         table = createNewConstraint(table, basisVars.values.toMutableList())
         val row = table.size-2
         val col = chooseColumnAfterRow(table, row)
-        println()
-        table.forEach {
-            println(it.joinToString(" "))
-        }
-        println(row to col)
-
 
         table = makeSimplexStep(table, row to col)
         println()
-        table.forEach {
-            println(it.joinToString(" "))
-        }
+        printData(table, basisVars, freeVars)
     }
 
     for(i in table.indices){
@@ -263,9 +329,8 @@ fun main(){
         }
     }
 
-    table.forEach {
-        println(it.joinToString(" "))
-    }
+    println()
+    printData(table, basisVars, freeVars)
 
     val answer = mutableMapOf<String, Int>()
 

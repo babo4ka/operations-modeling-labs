@@ -7,9 +7,17 @@ import kotlin.math.truncate
 
 var freeVars = mutableMapOf<String, Int>()
 val basisVars = mutableMapOf<String, Int>()
-var varsCount = 0
+val needVars = mutableListOf<String>()
 
-fun createSimplexTable(z:DoubleArray, a:Array<Pair<DoubleArray, String>>, b:DoubleArray):Triple<Array<DoubleArray>, Int, MutableList<Int>>{
+
+fun Z(z:DoubleArray, vars:DoubleArray):Double{
+
+    return z.foldIndexed(0.0){id, acc, el ->
+        acc + el * vars[id]
+    }
+}
+
+fun createSimplexTable(z:DoubleArray, a:Array<Pair<DoubleArray, String>>, b:DoubleArray):Pair<Array<DoubleArray>, Int>{
 
     val m = a.size // количество ограничений
     val n = z.size // количество переменных
@@ -37,14 +45,11 @@ fun createSimplexTable(z:DoubleArray, a:Array<Pair<DoubleArray, String>>, b:Doub
             artIndex++
             mainFunVal += b[i]
 
-            freeVars["x${varsCount+1}"] = freeVars.size
-            varsCount++
+            freeVars["x${freeVars.size + artIndex}"] = freeVars.size
             basisVars["x${freeVars.size+m}"] = i
-//            varsCount++
             artIndexes.add(i)
         }else{
-            basisVars["x${varsCount+1}"] = i
-            varsCount++
+            basisVars["x${freeVars.size + artIndex}"] = i
         }
 
     }
@@ -55,7 +60,7 @@ fun createSimplexTable(z:DoubleArray, a:Array<Pair<DoubleArray, String>>, b:Doub
 
     table.last()[table[0].lastIndex] = mainFunVal
 
-    return Triple(table, artIndex, artIndexes)
+    return table to artIndex
 }
 
 fun chooseColumn(a:Array<DoubleArray>, goal:String = "min", zCount:Int):Int{
@@ -135,7 +140,7 @@ fun makeSimplexStep(a:Array<DoubleArray>, coord:Pair<Int,Int>):Array<DoubleArray
     return newTable
 }
 
-fun createNewConstraint(a: Array<DoubleArray>, basisIndices:MutableList<Int>):Array<DoubleArray>{
+fun createNewConstraint(a: Array<DoubleArray>, basisIndices:MutableList<Int>, artIndex:Int):Array<DoubleArray>{
     val b = a.slice(a.indices).map { it.last() }
     var minDecRow = 0
     var minDec = Double.MAX_VALUE
@@ -160,14 +165,20 @@ fun createNewConstraint(a: Array<DoubleArray>, basisIndices:MutableList<Int>):Ar
         }
     }
 
-    basisVars["x$varsCount"] = a.size-1
+    basisVars["x${basisVars.size + freeVars.size + artIndex + 1}"] = a.size - 1
 
     return a.copyOfRange(0, a.lastIndex).plus(newRow.toDoubleArray()) + a.copyOfRange(a.size-1, a.size)
 }
 
 fun sliceTable(a:Array<DoubleArray>, count:Int):Array<DoubleArray>{
 
-    val newMap = freeVars.filter { !(0..<count).contains(it.value) }.toMutableMap()
+    var newMap = freeVars.filter { !(0..<count).contains(it.value) }.toMutableMap()
+    var id = 0
+    newMap = newMap.toList().sortedBy { (_, v) -> v }.toMap() as MutableMap<String, Int>
+    newMap.keys.forEach {
+        newMap[it] = id
+        id++
+    }
     freeVars = newMap
 
     return a.map{
@@ -199,39 +210,30 @@ fun isInConstraints(constraints:Array<Pair<DoubleArray, String>>, answer:Mutable
     return allData.all { it }
 }
 
-fun printData(a:Array<DoubleArray>, basisVars:MutableMap<String, Int>, freeVars:MutableMap<String, Int>){
-    val maxl = mutableMapOf<Int, Int>()
-    a.forEachIndexed {id, it ->
-        it.forEachIndexed { index, el ->
-            val l = el.toString().length
-            if(maxl[index] == null){
-                maxl[index] = l
-            }else if(l > maxl[index]!!){
-                maxl[index] = l
-            }
+fun replaceVars(col:Int, row:Int){
+    var keyToAdd = ""
+    freeVars.keys.forEach{
+        if(freeVars[it] == col){
+            keyToAdd = it
         }
     }
 
-    freeVars["b"] = freeVars.size
-    basisVars["z"] = basisVars.size
-
-    val sortedfree = freeVars.toList().sortedBy { (_, v) -> v }.toMap()
-    val sortedBasis = basisVars.toList().sortedBy { (_, v) -> v }.toMap()
-
-    print("${" ".repeat(maxl[0]!!)}|")
-    sortedfree.keys.forEachIndexed { id, it ->
-        print("$it${" ".repeat(maxl[id]!! - it.length)}|")
-    }
-
-    println()
-    a.forEachIndexed {i, it->
-        print("${sortedBasis.keys.toList()[i]}${" ".repeat(maxl[i]!! - sortedBasis.keys.toList()[i].length)}|")
-        it.forEachIndexed { id, el ->
-            print("$el${" ".repeat(maxl[id]!! - el.toString().length)}|")
+    var keyToCh = ""
+    basisVars.keys.forEach {
+        if(basisVars[it] == row){
+            keyToCh = it
         }
-        println()
     }
 
+    if(keyToCh != "") {
+        basisVars.remove(keyToCh)
+        freeVars[keyToCh] = col
+    }
+
+    if(keyToAdd!= ""){
+        basisVars[keyToAdd] = row
+        freeVars.remove(keyToAdd)
+    }
 }
 
 fun main(){
@@ -249,18 +251,10 @@ fun main(){
 
     z.forEachIndexed{ id, _ ->
         freeVars["x${id+1}"] = id
-        varsCount++
+        needVars.add("x${id+1}")
     }
 
-
-    var (table, artCount, artIds) = createSimplexTable(z, a, b)
-    freeVars.keys.forEach {
-        println("$it ${freeVars[it]}")
-    }
-
-    basisVars.keys.forEach{
-        println("$it ${basisVars[it]}")
-    }
+    var (table, artCount) = createSimplexTable(z, a, b)
 
 
     println("Начальная симплекс-таблица")
@@ -272,30 +266,7 @@ fun main(){
         val col = chooseColumn(table, "max", z.size)
         val row = chooseRow(table, b, col)
 
-        var keyToAdd = ""
-        freeVars.keys.forEach{
-            if(freeVars[it] == col){
-                keyToAdd = it
-                //basisVars[it] = row
-            }
-        }
-
-        var keyToCh = ""
-        basisVars.keys.forEach {
-            if(basisVars[it] == row){
-                keyToCh = it
-            }
-        }
-
-        if(keyToCh != "") {
-            basisVars.remove(keyToCh)
-            freeVars[keyToCh] = col
-        }
-
-        if(keyToAdd!= ""){
-            basisVars[keyToAdd] = row
-            freeVars.remove(keyToAdd)
-        }
+        replaceVars(col, row)
         println(row to col)
         table = makeSimplexStep(table, (row to col))
 
@@ -303,22 +274,40 @@ fun main(){
         printData(table, basisVars, freeVars)
     }
 
-    println("Решённая задача без условия целочисленности:")
     println()
+    println("Решённая задача без условия целочисленности:")
     printData(table, basisVars, freeVars)
 
+    println()
+    var funVal = Z(z, needVars.map {table[basisVars[it]!!].last()}.toDoubleArray())
+
+    z.forEachIndexed {id, it ->
+        print("${it.toInt()}x${id+1}${if(id==z.lastIndex) " = " else " + "}")
+    }
+    println(funVal)
+
+    z.forEachIndexed {id, it ->
+        print("${it.toInt()} * ${table[basisVars["x${id+1}"]!!].last()}${if(id==z.lastIndex) " = " else " + "}")
+    }
+    println(funVal)
+
+    println()
     table = sliceTable(table, artCount)
 
     println("Обрезанная таблица")
     printData(table, basisVars, freeVars)
 
-
-    while(!isAllBIntegers(table, basisVars.values.toMutableList())){
-        table = createNewConstraint(table, basisVars.values.toMutableList())
+    while(!isAllBIntegers(table, basisVars.filter { needVars.contains(it.key) }.toMap().values.toMutableList())){
+        table = createNewConstraint(table, basisVars.filter { needVars.contains(it.key) }.toMap().values.toMutableList(), artCount)
+        println()
+        println("Таблица с новыми ограничениями: ")
+        printData(table, basisVars, freeVars)
         val row = table.size-2
         val col = chooseColumnAfterRow(table, row)
 
-        table = makeSimplexStep(table, row to col)
+        replaceVars(col, row)
+
+        table = makeSimplexStep(table, (row to col))
         println()
         printData(table, basisVars, freeVars)
     }
@@ -330,17 +319,31 @@ fun main(){
     }
 
     println()
+    println("Итоговая таблица")
     printData(table, basisVars, freeVars)
-
+    println()
     val answer = mutableMapOf<String, Int>()
 
-    basisVars.keys.forEach{
+    basisVars.filter { needVars.contains(it.key) }.toMap().keys.forEach{
         answer[it] = table[basisVars[it]!!].last().toInt()
     }
 
     answer.keys.forEach {
         println("$it = ${answer[it]}")
     }
+
+    println()
+    funVal = Z(z, needVars.map {table[basisVars[it]!!].last()}.toDoubleArray())
+
+    z.forEachIndexed {id, it ->
+        print("${it.toInt()}x${id+1}${if(id==z.lastIndex) " = " else " + "}")
+    }
+    println(funVal)
+
+    z.forEachIndexed {id, it ->
+        print("${it.toInt()} * ${table[basisVars["x${id+1}"]!!].last()}${if(id==z.lastIndex) " = " else " + "}")
+    }
+    println(funVal)
 
     println(isInConstraints(a, answer, b))
 }

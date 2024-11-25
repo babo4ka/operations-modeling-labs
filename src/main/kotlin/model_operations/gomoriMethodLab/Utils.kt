@@ -36,7 +36,7 @@ fun printData(a:Array<DoubleArray>, basisVars:MutableMap<String, Int>, freeVars:
     val sortedBasis = basisVarsClone.toList().sortedBy {
         (_, v) -> v }.toMap()
 
-    print("${" ".repeat(2)}|")
+    print("${" ".repeat(3)}|")
     sortedfree.keys.forEachIndexed { id, it ->
         print("$it${" ".repeat(maxl[id]!! - it.length)}|")
     }

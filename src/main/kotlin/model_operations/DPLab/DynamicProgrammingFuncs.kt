@@ -1,18 +1,6 @@
 package model_operations.DPLab
 
 
-fun makeTable(m:Array<Int>, p:Int):MutableList<MutableList<Int>>{
-
-    val table = MutableList(m.size+1){MutableList(p+1){0} }
-
-    table[0].map { 0 }
-
-    table.forEach { it[0] = 0 }
-
-    return table
-}
-
-
 fun fillTable(m:IntArray, c:IntArray, p:Int):Array<IntArray>{
     val n = m.size
 
@@ -29,6 +17,9 @@ fun fillTable(m:IntArray, c:IntArray, p:Int):Array<IntArray>{
             }else{
                 val s = maxOf(table[i-1][j], table[i-1][j-m[i-1]]+c[i-1])
                 table[i][j] = s
+
+//                printTable(table)
+//                println()
             }
 
             continue
@@ -40,6 +31,49 @@ fun fillTable(m:IntArray, c:IntArray, p:Int):Array<IntArray>{
     return table
 }
 
+fun backStep(table:Array<IntArray>, m:IntArray, p:Int):IntArray{
+    val n = m.size
+
+    var w = p
+    val selectedItems = mutableListOf<Int>()
+
+    for(i in n downTo 1){
+        if(table[i][w] != table[i-1][w]){
+            selectedItems.add(i)
+
+            w-= m[i-1]
+        }
+    }
+
+
+    return selectedItems.toIntArray()
+}
+
+
+fun printTable(table:Array<IntArray>){
+
+    fun getLength():Int{
+        var max = 0
+
+        table.forEach {
+            val m = it.max()
+            if(m > max) max = m
+        }
+
+        return max.toString().length + 1
+    }
+
+
+    val maxL = getLength()
+
+    table.forEach {
+        it.forEach { el ->
+            print("$el${" ".repeat(if(maxL > el.toString().length) maxL - el.toString().length else 0)}|")
+        }
+
+        println()
+    }
+}
 
 
 fun main(){
@@ -51,8 +85,9 @@ fun main(){
 
     val table = fillTable(m, c, p)
 
-    table.forEach {
-        println(it.joinToString(" "))
-    }
+    printTable(table)
 
+    val items = backStep(table, m, p)
+
+    println(items.joinToString(" "))
 }

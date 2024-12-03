@@ -55,7 +55,7 @@ fun createSimplexTable(z:DoubleArray, a:Array<Pair<DoubleArray, String>>, b:Doub
     }
 
     for(i in 0..<z.size){
-        table[m][i] = -(z[i] - artIndexes.fold(0.0) {acc, el -> a[el].first[i] + acc})
+        table[m][i] = (z[i] - artIndexes.fold(0.0) {acc, el -> a[el].first[i] + acc})
     }
 
     table.last()[table[0].lastIndex] = mainFunVal
@@ -92,12 +92,8 @@ fun chooseRow(a:Array<DoubleArray>, b:DoubleArray, col:Int):Int{
 
     for(i in 0..<a.size-1){
         if(a[i][col] == 0.0) continue
-        if(b[i] > 0){
-            if(a[i][col] < 0) continue
-        }
-        if(b[i] < 0){
-            if(a[i][col] > 0)continue
-        }
+        if(b[i] > 0 && a[i][col] < 0) continue
+        if(b[i] < 0 && a[i][col] > 0) continue
 
 //        if(a[i][col] <= 0) continue
 
@@ -117,6 +113,11 @@ fun needToDoStep(z:DoubleArray, goal:String="min", zCount:Int):Boolean{
 //        "min" -> z.slice(0..<zCount).any{ it < 0}
         else -> false
     }
+}
+
+
+fun needToDoPreStep(b:DoubleArray):Boolean{
+    return b.any { it < 0.0 }
 }
 
 fun makeSimplexStep(a:Array<DoubleArray>, coord:Pair<Int,Int>):Array<DoubleArray>{
@@ -256,7 +257,7 @@ fun makeminus(a:Array<Pair<DoubleArray, String>>, b:DoubleArray):
             b1[id] = b[id]
         }
         else{
-            val newArr = it.first.map { -it }.toDoubleArray()
+            val newArr = it.first.map { if(it != 0.0) -it else 0.0 }.toDoubleArray()
             a1.add(newArr to "<=")
             b1[id] = -b[id]
         }
@@ -272,6 +273,8 @@ fun main(){
         Pair(doubleArrayOf(4.0, 3.0), ">="),
         Pair(doubleArrayOf(-3.0, 1.0), "<=")
     ), doubleArrayOf(5.0, 7.0, 8.0, 8.0))
+
+
 //    val a = makeminus(arrayOf(
 //        Pair(doubleArrayOf(0.0, 2.0), ">="),
 //        Pair(doubleArrayOf(2.0, -3.0), "<="),
@@ -280,6 +283,7 @@ fun main(){
 //    ))
 //
 //    val b = doubleArrayOf(5.0, 7.0, 8.0, 8.0)
+
 
     val z = doubleArrayOf(3.0, 2.0)
 
@@ -294,6 +298,28 @@ fun main(){
 
     println("Начальная симплекс-таблица")
     printData(table, basisVars, freeVars)
+
+
+    var bArr = b.clone()
+
+    while(needToDoPreStep(bArr)){
+        val row = bArr.toList().indexOf(bArr.filter { it < 0 }.maxBy { abs(it) })
+        val col = a[row].first.toList().indexOf(a[row].first.filter { it < 0 }.maxBy { abs(it) })
+
+        println("$row $col")
+
+        replaceVars(col, row)
+        println(row to col)
+        table = makeSimplexStep(table, (row to col))
+
+        bArr = table.slice(0..<table.size-1).map { it.last() }.toDoubleArray()
+        println(bArr.joinToString(" "))
+
+        println()
+        println("Таблица после симплекс-шага")
+        printData(table, basisVars, freeVars)
+        println()
+    }
 
 
     while(needToDoStep(table.last(), "min", z.size)){
@@ -329,18 +355,6 @@ fun main(){
     println()
     table = sliceTable(table, artCount)
 
-//    while(needToDoStep(table.last(), "min", z.size)){
-//        val col = chooseColumn(table, "min", z.size)
-//        val row = chooseRow(table, b, col)
-//
-//        replaceVars(col, row)
-//        println(row to col)
-//        table = makeSimplexStep(table, (row to col))
-//
-//        println()
-//        println("Таблица после симплекс-шага")
-//        printData(table, basisVars, freeVars)
-//    }
 
     println("Обрезанная таблица")
     printData(table, basisVars, freeVars)

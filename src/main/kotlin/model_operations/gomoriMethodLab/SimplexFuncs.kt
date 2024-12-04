@@ -45,11 +45,11 @@ fun createSimplexTable(z:DoubleArray, a:Array<Pair<DoubleArray, String>>, b:Doub
             artIndex++
             mainFunVal += b[i]
 
-            model_operations.gomoriMethodLab.simplexFuncsClone.freeVars["x${model_operations.gomoriMethodLab.simplexFuncsClone.freeVars.size + artIndex}"] = model_operations.gomoriMethodLab.simplexFuncsClone.freeVars.size
-            model_operations.gomoriMethodLab.simplexFuncsClone.basisVars["x${model_operations.gomoriMethodLab.simplexFuncsClone.freeVars.size+m}"] = i
+            freeVars["x${freeVars.size + artIndex}"] = freeVars.size
+            basisVars["x${freeVars.size+m}"] = i
             artIndexes.add(i)
         }else{
-            model_operations.gomoriMethodLab.simplexFuncsClone.basisVars["x${model_operations.gomoriMethodLab.simplexFuncsClone.freeVars.size + model_operations.gomoriMethodLab.simplexFuncsClone.basisVars.size + 1}"] = i
+            basisVars["x${freeVars.size + basisVars.size + 1}"] = i
         }
 
     }
@@ -345,33 +345,33 @@ fun main(){
 //    }
 
 
-    while(model_operations.gomoriMethodLab.simplexFuncsClone.needToDoStep(table.last(), "min", z.size)){
-        val col = model_operations.gomoriMethodLab.simplexFuncsClone.chooseColumn(table, "min", z.size)
-        val row = model_operations.gomoriMethodLab.simplexFuncsClone.chooseRow(table, b, col)
+    while(needToDoStep(table.last(), "min", z.size)){
+        val col = chooseColumn(table, "min", z.size)
+        val row = chooseRow(table, b, col)
 
-        model_operations.gomoriMethodLab.simplexFuncsClone.replaceVars(col, row)
+        replaceVars(col, row)
         println(row to col)
-        table = model_operations.gomoriMethodLab.simplexFuncsClone.makeSimplexStep(table, (row to col))
+        table = makeSimplexStep(table, (row to col))
 
         println()
         println("Таблица после симплекс-шага")
         printData(table,
-            model_operations.gomoriMethodLab.simplexFuncsClone.basisVars,
-            model_operations.gomoriMethodLab.simplexFuncsClone.freeVars
+            basisVars,
+            freeVars
         )
     }
 
     println()
     println("Решённая задача без условия целочисленности:")
     printData(table,
-        model_operations.gomoriMethodLab.simplexFuncsClone.basisVars,
-        model_operations.gomoriMethodLab.simplexFuncsClone.freeVars
+        basisVars,
+        freeVars
     )
 
     println()
-    var funVal = model_operations.gomoriMethodLab.simplexFuncsClone.Z(
+    var funVal =Z(
         z,
-        model_operations.gomoriMethodLab.simplexFuncsClone.needVars.map { table[model_operations.gomoriMethodLab.simplexFuncsClone.basisVars[it]!!].last() }
+        needVars.map { table[model_operations.gomoriMethodLab.simplexFuncsClone.basisVars[it]!!].last() }
             .toDoubleArray()
     )
 

@@ -1,5 +1,7 @@
-package model_operations.gomoriMethodLab
+package model_operations.gomoriMethodLab.simplexFuncsClone
 
+import model_operations.gomoriMethodLab.makeInt
+import model_operations.gomoriMethodLab.printData
 import java.math.RoundingMode
 import kotlin.math.abs
 import kotlin.math.truncate
@@ -26,7 +28,7 @@ fun createSimplexTable(z:DoubleArray, a:Array<Pair<DoubleArray, String>>, b:Doub
 
     var mainFunVal = 0.0
 
-    val table = Array(m+1) {DoubleArray(n + colsCount + 1)}
+    val table = Array(m+1) {DoubleArray(n + m + 1)}
 
     var artIndex = 0
 
@@ -39,18 +41,25 @@ fun createSimplexTable(z:DoubleArray, a:Array<Pair<DoubleArray, String>>, b:Doub
 
         table[i][table[i].lastIndex] = b[i]
 
-        if(a[i].second == ">="){
-            table[i][n+artIndex] = -1.0
-            table.last()[n+artIndex] = -1.0
-            artIndex++
-            mainFunVal += b[i]
+        val newNumOfVar = freeVars.size + 1
 
-            model_operations.gomoriMethodLab.simplexFuncsClone.freeVars["x${model_operations.gomoriMethodLab.simplexFuncsClone.freeVars.size + artIndex}"] = model_operations.gomoriMethodLab.simplexFuncsClone.freeVars.size
-            model_operations.gomoriMethodLab.simplexFuncsClone.basisVars["x${model_operations.gomoriMethodLab.simplexFuncsClone.freeVars.size+m}"] = i
-            artIndexes.add(i)
-        }else{
-            model_operations.gomoriMethodLab.simplexFuncsClone.basisVars["x${model_operations.gomoriMethodLab.simplexFuncsClone.freeVars.size + model_operations.gomoriMethodLab.simplexFuncsClone.basisVars.size + 1}"] = i
-        }
+        basisVars["x$newNumOfVar"] = i
+        freeVars["x$newNumOfVar"] = i + z.size
+
+        //println("x$newNumOfVar x$newNumOfVar")
+
+//        if(a[i].second == ">="){
+//            table[i][n+artIndex] = -1.0
+//            table.last()[n+artIndex] = -1.0
+//            artIndex++
+//            mainFunVal += b[i]
+//
+//            freeVars["x${freeVars.size + artIndex}"] = freeVars.size
+//            basisVars["x${freeVars.size+m}"] = i
+//            artIndexes.add(i)
+//        }else{
+//
+//        }
 
     }
 
@@ -194,21 +203,21 @@ fun createNewConstraint(a: Array<DoubleArray>, basisIndices:MutableList<Int>, ar
         }
     }
 
-    model_operations.gomoriMethodLab.simplexFuncsClone.basisVars["x${model_operations.gomoriMethodLab.simplexFuncsClone.basisVars.size + model_operations.gomoriMethodLab.simplexFuncsClone.freeVars.size + artIndex + 1}"] = a.size - 1
+    basisVars["x${basisVars.size + freeVars.size + artIndex + 1}"] = a.size - 1
 
     return a.copyOfRange(0, a.lastIndex).plus(newRow.toDoubleArray()) + a.copyOfRange(a.size-1, a.size)
 }
 
 fun sliceTable(a:Array<DoubleArray>, count:Int):Array<DoubleArray>{
 
-    var newMap = model_operations.gomoriMethodLab.simplexFuncsClone.freeVars.filter { !(0..<count).contains(it.value) }.toMutableMap()
+    var newMap = freeVars.filter { !(0..<count).contains(it.value) }.toMutableMap()
     var id = 0
     newMap = newMap.toList().sortedBy { (_, v) -> v }.toMap() as MutableMap<String, Int>
     newMap.keys.forEach {
         newMap[it] = id
         id++
     }
-    model_operations.gomoriMethodLab.simplexFuncsClone.freeVars = newMap
+    freeVars = newMap
 
     return a.map{
         it.slice(count..<it.size).toDoubleArray()
@@ -226,14 +235,14 @@ fun isInConstraints(constraints:Array<Pair<DoubleArray, String>>, answer:Mutable
         val (cons, sign) = it
         val sum = cons.foldIndexed(0.0) { id, acc, el ->
             answer["x${id+1}"]!! * el + acc
-            }
+        }
 
         when(sign){
             ">=" -> sum >= b[i]
             "<=" -> sum <= b[i]
             else -> false
         }
-   }
+    }
 
 
     return allData.all { it }
@@ -241,27 +250,27 @@ fun isInConstraints(constraints:Array<Pair<DoubleArray, String>>, answer:Mutable
 
 fun replaceVars(col:Int, row:Int){
     var keyToAdd = ""
-    model_operations.gomoriMethodLab.simplexFuncsClone.freeVars.keys.forEach{
-        if(model_operations.gomoriMethodLab.simplexFuncsClone.freeVars[it] == col){
+    freeVars.keys.forEach{
+        if(freeVars[it] == col){
             keyToAdd = it
         }
     }
 
     var keyToCh = ""
-    model_operations.gomoriMethodLab.simplexFuncsClone.basisVars.keys.forEach {
-        if(model_operations.gomoriMethodLab.simplexFuncsClone.basisVars[it] == row){
+    basisVars.keys.forEach {
+        if(basisVars[it] == row){
             keyToCh = it
         }
     }
 
     if(keyToCh != "") {
-        model_operations.gomoriMethodLab.simplexFuncsClone.basisVars.remove(keyToCh)
-        model_operations.gomoriMethodLab.simplexFuncsClone.freeVars[keyToCh] = col
+        basisVars.remove(keyToCh)
+        //freeVars[keyToCh] = col
     }
 
     if(keyToAdd!= ""){
-        model_operations.gomoriMethodLab.simplexFuncsClone.basisVars[keyToAdd] = row
-        model_operations.gomoriMethodLab.simplexFuncsClone.freeVars.remove(keyToAdd)
+        basisVars[keyToAdd] = row
+        //freeVars.remove(keyToAdd)
     }
 }
 
@@ -285,14 +294,12 @@ fun makeminus(a:Array<Pair<DoubleArray, String>>, b:DoubleArray):
 }
 
 fun main(){
-    val (a, b) = model_operations.gomoriMethodLab.simplexFuncsClone.makeminus(
-        arrayOf(
-            Pair(doubleArrayOf(0.0, 2.0), ">="),
-            Pair(doubleArrayOf(2.0, -3.0), "<="),
-            Pair(doubleArrayOf(4.0, 3.0), ">="),
-            Pair(doubleArrayOf(-3.0, 1.0), "<=")
-        ), doubleArrayOf(5.0, 7.0, 8.0, 8.0)
-    )
+    val (a, b) = makeminus(arrayOf(
+        Pair(doubleArrayOf(0.0, 2.0), ">="),
+        Pair(doubleArrayOf(2.0, -3.0), "<="),
+        Pair(doubleArrayOf(4.0, 3.0), ">="),
+        Pair(doubleArrayOf(-3.0, 1.0), "<=")
+    ), doubleArrayOf(5.0, 7.0, 8.0, 8.0))
 
 
 //    val a = makeminus(arrayOf(
@@ -309,18 +316,15 @@ fun main(){
 
 
     z.forEachIndexed{ id, _ ->
-        model_operations.gomoriMethodLab.simplexFuncsClone.freeVars["x${id+1}"] = id
-        model_operations.gomoriMethodLab.simplexFuncsClone.needVars.add("x${id+1}")
+        freeVars["x${id+1}"] = id
+        needVars.add("x${id+1}")
     }
 
-    var (table, artCount) = model_operations.gomoriMethodLab.simplexFuncsClone.createSimplexTable(z, a, b)
+    var (table, artCount) = createSimplexTable(z, a, b)
 
 
     println("Начальная симплекс-таблица")
-    printData(table,
-        model_operations.gomoriMethodLab.simplexFuncsClone.basisVars,
-        model_operations.gomoriMethodLab.simplexFuncsClone.freeVars
-    )
+    printData(table, basisVars, freeVars)
 
 
     var bArr = b.clone()
@@ -345,35 +349,25 @@ fun main(){
 //    }
 
 
-    while(model_operations.gomoriMethodLab.simplexFuncsClone.needToDoStep(table.last(), "min", z.size)){
-        val col = model_operations.gomoriMethodLab.simplexFuncsClone.chooseColumn(table, "min", z.size)
-        val row = model_operations.gomoriMethodLab.simplexFuncsClone.chooseRow(table, b, col)
+    while(needToDoStep(table.last(), "min", z.size)){
+        val col = chooseColumn(table, "min", z.size)
+        val row = chooseRow(table, b, col)
 
-        model_operations.gomoriMethodLab.simplexFuncsClone.replaceVars(col, row)
+        replaceVars(col, row)
         println(row to col)
-        table = model_operations.gomoriMethodLab.simplexFuncsClone.makeSimplexStep(table, (row to col))
+        table = makeSimplexStep(table, (row to col))
 
         println()
         println("Таблица после симплекс-шага")
-        printData(table,
-            model_operations.gomoriMethodLab.simplexFuncsClone.basisVars,
-            model_operations.gomoriMethodLab.simplexFuncsClone.freeVars
-        )
+        printData(table, basisVars, freeVars)
     }
 
     println()
     println("Решённая задача без условия целочисленности:")
-    printData(table,
-        model_operations.gomoriMethodLab.simplexFuncsClone.basisVars,
-        model_operations.gomoriMethodLab.simplexFuncsClone.freeVars
-    )
+    printData(table, basisVars, freeVars)
 
     println()
-    var funVal = model_operations.gomoriMethodLab.simplexFuncsClone.Z(
-        z,
-        model_operations.gomoriMethodLab.simplexFuncsClone.needVars.map { table[model_operations.gomoriMethodLab.simplexFuncsClone.basisVars[it]!!].last() }
-            .toDoubleArray()
-    )
+    var funVal = Z(z, needVars.map {table[basisVars[it]!!].last()}.toDoubleArray())
 
     z.forEachIndexed {id, it ->
         print("${it.toInt()}x${id+1}${if(id==z.lastIndex) " = " else " + "}")
@@ -381,56 +375,33 @@ fun main(){
     println(funVal)
 
     z.forEachIndexed {id, it ->
-        print("${it.toInt()} * ${table[model_operations.gomoriMethodLab.simplexFuncsClone.basisVars["x${id+1}"]!!].last()}${if(id==z.lastIndex) " = " else " + "}")
+        print("${it.toInt()} * ${table[basisVars["x${id+1}"]!!].last()}${if(id==z.lastIndex) " = " else " + "}")
     }
     println(funVal)
 
     println()
-    table = model_operations.gomoriMethodLab.simplexFuncsClone.sliceTable(table, artCount)
+    table = sliceTable(table, artCount)
 
 
     println("Обрезанная таблица")
-    printData(table,
-        model_operations.gomoriMethodLab.simplexFuncsClone.basisVars,
-        model_operations.gomoriMethodLab.simplexFuncsClone.freeVars
-    )
+    printData(table, basisVars, freeVars)
 
 
 
-    while(!model_operations.gomoriMethodLab.simplexFuncsClone.isAllBIntegers(
-            table,
-            model_operations.gomoriMethodLab.simplexFuncsClone.basisVars.filter {
-                model_operations.gomoriMethodLab.simplexFuncsClone.needVars.contains(it.key)
-            }.toMap().values.toMutableList()
-        )
-    ){
-        table = model_operations.gomoriMethodLab.simplexFuncsClone.createNewConstraint(
-            table,
-            model_operations.gomoriMethodLab.simplexFuncsClone.basisVars.filter {
-                model_operations.gomoriMethodLab.simplexFuncsClone.needVars.contains(
-                    it.key
-                )
-            }.toMap().values.toMutableList(),
-            artCount
-        )
+    while(!isAllBIntegers(table, basisVars.filter { needVars.contains(it.key) }.toMap().values.toMutableList())){
+        table = createNewConstraint(table, basisVars.filter { needVars.contains(it.key) }.toMap().values.toMutableList(), artCount)
         println()
         println("Таблица с новыми ограничениями: ")
-        printData(table,
-            model_operations.gomoriMethodLab.simplexFuncsClone.basisVars,
-            model_operations.gomoriMethodLab.simplexFuncsClone.freeVars
-        )
+        printData(table, basisVars, freeVars)
         val row = table.size-2
-        val col = model_operations.gomoriMethodLab.simplexFuncsClone.chooseColumnAfterRow(table, row)
+        val col = chooseColumnAfterRow(table, row)
 
-        model_operations.gomoriMethodLab.simplexFuncsClone.replaceVars(col, row)
+        replaceVars(col, row)
 
-        table = model_operations.gomoriMethodLab.simplexFuncsClone.makeSimplexStep(table, (row to col))
+        table = makeSimplexStep(table, (row to col))
         println()
         println("Таблица после сиплекс-шага")
-        printData(table,
-            model_operations.gomoriMethodLab.simplexFuncsClone.basisVars,
-            model_operations.gomoriMethodLab.simplexFuncsClone.freeVars
-        )
+        printData(table, basisVars, freeVars)
     }
 
     for(i in table.indices){
@@ -441,15 +412,12 @@ fun main(){
 
     println()
     println("Итоговая таблица")
-    printData(table,
-        model_operations.gomoriMethodLab.simplexFuncsClone.basisVars,
-        model_operations.gomoriMethodLab.simplexFuncsClone.freeVars
-    )
+    printData(table, basisVars, freeVars)
     println()
     val answer = mutableMapOf<String, Int>()
 
-    model_operations.gomoriMethodLab.simplexFuncsClone.basisVars.filter { model_operations.gomoriMethodLab.simplexFuncsClone.needVars.contains(it.key) }.toMap().keys.forEach{
-        answer[it] = table[model_operations.gomoriMethodLab.simplexFuncsClone.basisVars[it]!!].last().toInt()
+    basisVars.filter { needVars.contains(it.key) }.toMap().keys.forEach{
+        answer[it] = table[basisVars[it]!!].last().toInt()
     }
 
     answer.keys.forEach {
@@ -457,11 +425,7 @@ fun main(){
     }
 
     println()
-    funVal = model_operations.gomoriMethodLab.simplexFuncsClone.Z(
-        z,
-        model_operations.gomoriMethodLab.simplexFuncsClone.needVars.map { table[model_operations.gomoriMethodLab.simplexFuncsClone.basisVars[it]!!].last() }
-            .toDoubleArray()
-    )
+    funVal = Z(z, needVars.map {table[basisVars[it]!!].last()}.toDoubleArray())
 
     z.forEachIndexed {id, it ->
         print("${it.toInt()}x${id+1}${if(id==z.lastIndex) " = " else " + "}")
@@ -469,9 +433,9 @@ fun main(){
     println(funVal)
 
     z.forEachIndexed {id, it ->
-        print("${it.toInt()} * ${table[model_operations.gomoriMethodLab.simplexFuncsClone.basisVars["x${id+1}"]!!].last()}${if(id==z.lastIndex) " = " else " + "}")
+        print("${it.toInt()} * ${table[basisVars["x${id+1}"]!!].last()}${if(id==z.lastIndex) " = " else " + "}")
     }
     println(funVal)
 
-    println(model_operations.gomoriMethodLab.simplexFuncsClone.isInConstraints(a, answer, b))
+    println(isInConstraints(a, answer, b))
 }

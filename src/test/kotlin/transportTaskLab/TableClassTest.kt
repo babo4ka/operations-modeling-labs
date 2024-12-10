@@ -1,6 +1,7 @@
 package transportTaskLab
 
 import model_operations.transportTaskLab.*
+import model_systems.game_theory.findSedlo
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 import kotlin.system.measureTimeMillis
@@ -104,5 +105,17 @@ class TableClassTest{
 
             assertEquals(expectedTables[id], pm)
         }
+    }
+
+
+    @Test
+    fun testSedlo1(){
+        val a = arrayOf(
+            intArrayOf(9, 3),
+            intArrayOf(6, 4),
+            intArrayOf(8, 7))
+        val (found, _) = findSedlo(a)
+
+        assertEquals(true, found)
     }
 }

@@ -51,20 +51,6 @@ fun createSimplexTable(z:DoubleArray, a:Array<Pair<DoubleArray, String>>, b:Doub
         table[i][index + n] = 1.0
         index++
 
-        //println("x$newNumOfVar x$newNumOfVar")
-
-//        if(a[i].second == ">="){
-//            table[i][n+artIndex] = -1.0
-//            table.last()[n+artIndex] = -1.0
-//            artIndex++
-//            mainFunVal += b[i]
-//
-//            freeVars["x${freeVars.size + artIndex}"] = freeVars.size
-//            basisVars["x${freeVars.size+m}"] = i
-//            artIndexes.add(i)
-//        }else{
-//
-//        }
 
     }
 
@@ -183,18 +169,16 @@ fun makePreStep(a:Array<DoubleArray>, coord:Pair<Int,Int>):Array<DoubleArray>{
     return newTable
 }
 
-fun createNewConstraint(a: Array<DoubleArray>, basisIndices:MutableList<Int>, artIndex:Int):Array<DoubleArray>{
+fun createNewConstraint(a: Array<DoubleArray>):Array<DoubleArray>{
     val b = a.slice(a.indices).map { it.last() }
     var minDecRow = 0
     var minDec = Double.MAX_VALUE
 
     b.forEachIndexed { id, it ->
-        if(basisIndices.contains(id)){
-            val dec = it - truncate(it)
-            if(dec < minDec && it != 0.0){
-                minDec = dec
-                minDecRow = id
-            }
+        val dec = it - truncate(it)
+        if(dec < minDec && it != 0.0 && dec != 0.0){
+            minDec = dec
+            minDecRow = id
         }
     }
 
@@ -208,9 +192,28 @@ fun createNewConstraint(a: Array<DoubleArray>, basisIndices:MutableList<Int>, ar
         }
     }
 
-    basisVars["x${basisVars.size + freeVars.size + artIndex + 1}"] = a.size - 1
+    val newArr = Array(a.size + 1){DoubleArray(a[0].size+1)}
 
-    return a.copyOfRange(0, a.lastIndex).plus(newRow.toDoubleArray()) + a.copyOfRange(a.size-1, a.size)
+
+    for(i in 0..<a.size-1){
+        newArr[i] = a[i].copyOfRange(0, a[i].lastIndex)
+            .plus(0.0) + a[i].copyOfRange(a[i].size - 1, a[i].size)
+    }
+
+    newArr[newArr.size-2] = newRow.toDoubleArray().copyOfRange(0, newRow.lastIndex)
+        .plus(1.0) + newRow.toDoubleArray().copyOfRange(newRow.size - 1, newRow.size)
+
+    newArr[newArr.lastIndex] = a.last().copyOfRange(0, a.last().lastIndex)
+        .plus(0.0) + a.last().copyOfRange(a.last().size - 1, a.last().size)
+
+
+    val numOfNewVar = freeVars.size + 1
+
+    basisVars["x$numOfNewVar"] = newArr.size - 2
+    freeVars["x$numOfNewVar"] = newArr[0].size - 2
+
+
+    return newArr
 }
 
 fun sliceTable(a:Array<DoubleArray>, count:Int):Array<DoubleArray>{
@@ -229,8 +232,8 @@ fun sliceTable(a:Array<DoubleArray>, count:Int):Array<DoubleArray>{
     }.toTypedArray()
 }
 
-fun isAllBIntegers(a:Array<DoubleArray>, basisIndices:MutableList<Int>):Boolean{
-    return a.filterIndexed { id, _ -> basisIndices.contains(id) }.all { (makeInt(it.last()) - makeInt(truncate(it.last()))) == 0.0 }
+fun isAllBIntegers(a:Array<DoubleArray>):Boolean{
+    return a.all { (makeInt(it.last()) - makeInt(it.last())) == 0.0 }
 }
 
 
@@ -270,12 +273,10 @@ fun replaceVars(col:Int, row:Int){
 
     if(keyToCh != "") {
         basisVars.remove(keyToCh)
-        //freeVars[keyToCh] = col
     }
 
     if(keyToAdd!= ""){
         basisVars[keyToAdd] = row
-        //freeVars.remove(keyToAdd)
     }
 }
 
@@ -334,7 +335,7 @@ fun main(){
         needVars.add("x${id+1}")
     }
 
-    var (table, artCount) = createSimplexTable(z, a, b)
+    var (table, _) = createSimplexTable(z, a, b)
 
 
     println("Начальная симплекс-таблица")
@@ -405,17 +406,9 @@ fun main(){
     }
     println(funVal)
 
-//    println()
-//    table = sliceTable(table, artCount)
-//
-//
-//    println("Обрезанная таблица")
-//    printData(table, basisVars, freeVars)
 
-
-
-    while(!isAllBIntegers(table, basisVars.filter { needVars.contains(it.key) }.toMap().values.toMutableList())){
-        table = createNewConstraint(table, basisVars.filter { needVars.contains(it.key) }.toMap().values.toMutableList(), artCount)
+    while(!isAllBIntegers(table)){
+        table = createNewConstraint(table)
         println()
         println("Таблица с новыми ограничениями: ")
         printData(table, basisVars, freeVars)
@@ -442,16 +435,18 @@ fun main(){
     println()
     val answer = mutableMapOf<String, Int>()
 
-    basisVars.filter { needVars.contains(it.key) }.toMap().keys.forEach{
-        answer[it] = table[basisVars[it]!!].last().toInt()
+    needVars.forEach{
+        if(basisVars[it] == null) answer[it] = 0
+        else answer[it] = table[basisVars[it]!!].last().toInt()
     }
+
 
     answer.keys.forEach {
         println("$it = ${answer[it]}")
     }
 
     println()
-    funVal = Z(z, needVars.map {table[basisVars[it]!!].last()}.toDoubleArray())
+    funVal = Z(z, needVars.map {if(basisVars[it] == null)0.0 else table[basisVars[it]!!].last()}.toDoubleArray())
 
     z.forEachIndexed {id, it ->
         print("${it.toInt()}x${id+1}${if(id==z.lastIndex) " = " else " + "}")
@@ -459,7 +454,7 @@ fun main(){
     println(funVal)
 
     z.forEachIndexed {id, it ->
-        print("${it.toInt()} * ${table[basisVars["x${id+1}"]!!].last()}${if(id==z.lastIndex) " = " else " + "}")
+        print("${it.toInt()} * ${if(basisVars["x${id+1}"] == null) 0.0 else table[basisVars["x${id+1}"]!!].last()}${if(id==z.lastIndex) " = " else " + "}")
     }
     println(funVal)
 

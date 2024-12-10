@@ -17,9 +17,6 @@ fun fillTable(m:IntArray, c:IntArray, p:Int):Array<IntArray>{
             }else{
                 val s = maxOf(table[i-1][j], table[i-1][j-m[i-1]]+c[i-1])
                 table[i][j] = s
-
-//                printTable(table)
-//                println()
             }
 
             continue

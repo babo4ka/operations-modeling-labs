@@ -398,20 +398,11 @@ fun main(){
 
 
     while(!model_operations.gomoriMethodLab.simplexFuncsClone.isAllBIntegers(
-            table,
-            model_operations.gomoriMethodLab.simplexFuncsClone.basisVars.filter {
-                model_operations.gomoriMethodLab.simplexFuncsClone.needVars.contains(it.key)
-            }.toMap().values.toMutableList()
+            table
         )
     ){
         table = model_operations.gomoriMethodLab.simplexFuncsClone.createNewConstraint(
-            table,
-            model_operations.gomoriMethodLab.simplexFuncsClone.basisVars.filter {
-                model_operations.gomoriMethodLab.simplexFuncsClone.needVars.contains(
-                    it.key
-                )
-            }.toMap().values.toMutableList(),
-            artCount
+            table
         )
         println()
         println("Таблица с новыми ограничениями: ")

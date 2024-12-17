@@ -1,4 +1,4 @@
-package transportTaskLab
+package tests.transportTaskLab
 
 import model_operations.transportTaskLab.*
 import model_systems.game_theory.findSedlo

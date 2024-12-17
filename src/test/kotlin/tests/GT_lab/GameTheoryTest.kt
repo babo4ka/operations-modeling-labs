@@ -1,4 +1,4 @@
-package GT_lab
+package tests.GT_lab
 
 import model_systems.game_theory.findSedlo
 import org.junit.jupiter.api.Test

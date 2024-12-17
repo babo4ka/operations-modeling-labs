@@ -15,6 +15,18 @@ fun main(){
 
     net.printEvents()
 
-    println(net.findEnter())
-    println(net.findExit())
+    val enter = net.findEnter()
+    val exit = net.findExit()
+
+
+    println("Вход в сеть: $enter")
+    println("Выход из сети: $exit")
+
+    val earlier = net.findEarlierTimes()
+
+    println()
+    println("Ранее время для каждого события: ")
+    earlier.forEach {
+        println("${it.first} --- ${it.second}")
+    }
 }

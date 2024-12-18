@@ -22,11 +22,39 @@ fun main(){
     println("Вход в сеть: $enter")
     println("Выход из сети: $exit")
 
-    val earlier = net.findEarlierTimes()
+    val earliest = net.findEarliestTimes()
 
     println()
     println("Ранее время для каждого события: ")
-    earlier.forEach {
+    earliest.forEach {
         println("${it.first} --- ${it.second}")
+    }
+
+    val latest = net.findLatestTimes()
+    println()
+    println("Позднее время для каждого события: ")
+    latest.forEach {
+        println("${it.first} --- ${it.second}")
+    }
+
+    val res = net.findReserves()
+
+    println("Резервное время для каждого события: ")
+    res.forEach {
+        println("${it.first} --- ${it.second}")
+    }
+
+
+    println("Критические работы: ")
+    res.forEach {
+        if(it.second == 0){
+            println(it.first)
+        }
+    }
+
+    val criticalWay = net.getCriticalWay()
+    println("Критическому пути принадлежат события: ")
+    criticalWay.forEach {
+        println(it)
     }
 }

@@ -24,12 +24,25 @@ class SPLabTest {
     fun testEnter(){
         val enter = net.findEnter()
 
-        val earlier = net.findEarlierTimes()
+        val earlier = net.findEarliestTimes()
 
         earlier.forEach {
             println("${it.first} --- ${it.second}")
         }
 
         assertEquals(1, enter)
+    }
+
+
+    @Test
+    fun testLatest(){
+        net.findEarliestTimes()
+        net.findLatestTimes()
+
+        val res = net.findReserves()
+
+        res.forEach {
+            println("${it.first} --- ${it.second}")
+        }
     }
 }

@@ -2,10 +2,14 @@ package model_operations.SPLab
 
 class Net(transes:Array<Event>, numOfEvs:Int){
 
-    val eventsNum = numOfEvs
-    val transitions = transes
+    private val eventsNum = numOfEvs
+    private val transitions = transes
+    private var criticalTime = -1
 
-    lateinit var iterations: MutableList<Array<Int>>
+    private var earliestTimes:Array<Pair<Int, Int>>? = null
+    private var latestTimes:Array<Pair<Int, Int>>? = null
+
+    private lateinit var iterations: MutableList<Array<Int>>
 
     fun printEvents(){
         println("События: ")
@@ -17,7 +21,7 @@ class Net(transes:Array<Event>, numOfEvs:Int){
 
 
     fun findEnter():Int{
-        val evs = (1..9).map { it }.toMutableList()
+        val evs = (1..eventsNum).map { it }.toMutableList()
 
         transitions.forEach {
             if(evs.contains(it.end)) evs.remove(it.end)
@@ -27,7 +31,7 @@ class Net(transes:Array<Event>, numOfEvs:Int){
     }
 
     fun findExit():Int{
-        val evs = (1..9).map{it}.toMutableList()
+        val evs = (1..eventsNum).map{it}.toMutableList()
 
         transitions.forEach {
             if(evs.contains(it.start)) evs.remove(it.start)
@@ -36,13 +40,15 @@ class Net(transes:Array<Event>, numOfEvs:Int){
         return evs[0]
     }
 
-    fun findEarlierTimes():Array<Pair<Int, Int>>{
-        val t = Array(9){0}
+    fun findEarliestTimes():Array<Pair<Int, Int>>{
+        val t = Array(eventsNum){0}
 
         var updated: Boolean
 
 
         iterations = mutableListOf()
+
+        iterations.add(t.clone())
 
         do{
             updated = false
@@ -60,9 +66,66 @@ class Net(transes:Array<Event>, numOfEvs:Int){
         println("Вычисление раннего времени на разных итерациях: ")
         printIterations()
 
-        return t.mapIndexed { id, it -> id+1 to it }.toTypedArray()
+        criticalTime = t.last()
+
+        earliestTimes = t.mapIndexed { id, it -> id+1 to it }.toTypedArray()
+        return earliestTimes as Array<Pair<Int, Int>>
     }
 
+
+    fun findLatestTimes():Array<Pair<Int, Int>>{
+        val t = Array(eventsNum){criticalTime}
+
+        var updated:Boolean
+
+        iterations = mutableListOf()
+
+        iterations.add(t.clone())
+        do{
+            updated = false
+            transitions.forEach {
+                val newVal = minOf(t[it.start-1], t[it.end-1] - it.time)
+                if(newVal != t[it.start-1]) updated = true
+                t[it.start-1] = newVal
+            }
+
+            iterations.add(t.clone())
+        }while (updated)
+
+
+        println()
+        println("Вычисление позднего времени на разных итерациях: ")
+        printIterations()
+
+        latestTimes = t.mapIndexed { id, it -> id+1 to it }.toTypedArray()
+
+        return latestTimes as Array<Pair<Int, Int>>
+    }
+
+
+    fun findReserves():Array<Pair<Int, Int>>{
+        val reserves = mutableListOf<Pair<Int, Int>>()
+
+        transitions.forEachIndexed { id, it ->
+            reserves.add(
+                id+1 to (latestTimes!!.first { el -> el.first == it.end }.second - earliestTimes!!.first{ el -> el.first == it.start}.second - it.time)
+            )
+        }
+
+        return reserves.toTypedArray()
+    }
+
+
+    fun getCriticalWay():Array<Int>{
+        val evs = mutableListOf<Int>()
+
+        (1..eventsNum).forEach {
+            if(latestTimes!!.first { el -> el.first == it }.second == earliestTimes!!.first { el -> el.first == it }.second)
+                evs.add(it)
+        }
+
+        return evs.toTypedArray()
+    }
 
     private fun printIterations(){
         val firstColLen = eventsNum.toString().length

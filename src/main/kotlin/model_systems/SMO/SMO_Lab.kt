@@ -2,15 +2,15 @@ package model_systems.SMO
 
 import kotlin.math.pow
 
-val getU: (Double) -> Double = {1/it}
+val getU: (Double) -> Double = {1/it} //функция для вычисления потока обслуживания
 
-val getP: (Double, Double) -> Double = {l, u -> l/u}
+val getP: (Double, Double) -> Double = {l, u -> l/u} //функция для вычисления интенсивности нагрузки системы
 
-val getLSMO: (Double) -> Double = {it/(1-it)}
+val getLSMO: (Double) -> Double = {it/(1-it)} //функция для вычисления среднего числа заявок в системе
 
-val getAvgW: (Double, Double) -> Double = {u, l -> 1/(u-l)}
+val getAvgW: (Double, Double) -> Double = {u, l -> 1/(u-l)} //функция для вычисления среднего времени ожидания
 
-val getP0: (Double) -> Double = {it.pow(0) * (1-it)}
+val getP0: (Double) -> Double = {it.pow(0) * (1-it)} //функция для вычисления вероятности пустой очереди
 
 fun main(){
 

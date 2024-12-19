@@ -39,13 +39,15 @@ fun main(){
     val lower = findLowerPrice(a)
     val higher = findHigherPrice(a)
 
-    println(lower)
-    println(higher)
+    println("Нижняя цена: $lower")
+    println("Верхняя цена: $higher")
 
 
     val(found, coord) = findSedlo(a)
 
     if(found){
         println("Седловая точка найдена: ${coord.first} ${coord.second}")
+    }else{
+        println("Седловой точки нет")
     }
 }

@@ -2,117 +2,75 @@ package model_operations.bgLab
 
 fun main(){
 
-    val vertices = 6
-    val graph = mutableListOf<MutableList<Edge>>()
-    val potential = IntArray(vertices) { 0 }
+    val verticesCount = 6
 
-
-    for (i in 0..<vertices) {
-        graph.add(mutableListOf())
-    }
+    val edges = mutableListOf<Edge>()
+    val adj = Array(verticesCount) { mutableListOf<Edge>() }
 
     fun addEdge(from: Int, to: Int, capacity: Int, cost: Int) {
-        graph[from].add(Edge(from, to, capacity, cost))
-        graph[to].add(Edge(to, from, 0, -cost))
+        val edge = Edge(from, to, capacity, cost)
+        edges.add(edge)
+        adj[from].add(edge)
     }
 
-    fun bellmanFord(source: Int) {
-        val dist = IntArray(vertices) { Int.MAX_VALUE / 2 }
-        dist[source] = 0
-
-        for (i in 0..<vertices - 1) {
-            for (u in 0..<vertices) {
-                for (edge in graph[u]) {
-                    if (edge.flow < edge.capacity &&
-                        dist[u] + edge.cost < dist[edge.to]) {
-                        dist[edge.to] = dist[u] + edge.cost
-                    }
-                }
-            }
-        }
-
-        for (i in 0..<vertices) {
-            potential[i] += dist[i]
-        }
-    }
-
-    fun dijkstra(source: Int): Pair<IntArray, IntArray> {
-        val dist = IntArray(vertices) { Int.MAX_VALUE / 2 }
-        val parent = IntArray(vertices) { -1 }
-        dist[source] = 0
-
-        val priorityQueue = java.util.PriorityQueue<Pair<Int, Int>>(compareBy { it.first })
-        priorityQueue.add(Pair(0, source))
-
-        while (priorityQueue.isNotEmpty()) {
-            val (currentDist, u) = priorityQueue.poll()
-
-            if (currentDist > dist[u]) continue
-
-            for (edge in graph[u]) {
-                if (edge.flow < edge.capacity) {
-                    val cost = edge.cost + potential[u] - potential[edge.to]
-                    if (dist[u] + cost < dist[edge.to]) {
-                        dist[edge.to] = dist[u] + cost
-                        parent[edge.to] = u
-                        priorityQueue.add(Pair(dist[edge.to], edge.to))
-                    }
-                }
-            }
-        }
-
-        return Pair(dist, parent)
-    }
-
-
-    fun minCostMaxFlow(source: Int, sink: Int, maxFlow: Int): Pair<Int, Int> {
-        bellmanFord(source) // инициализация потенциалов
-
-        var totalFlow = 0
+    fun minCostFlow(source: Int, sink: Int, flow: Int): Pair<Int, Int> {
         var totalCost = 0
+        var totalFlow = 0
 
-        while (totalFlow < maxFlow) {
-            val (dist, parent) = dijkstra(source)
+        while (totalFlow < flow) {
+            // Реализация алгоритма поиска кратчайшего пути с уменьшенной стоимостью
+            val distances = IntArray(verticesCount) { Int.MAX_VALUE }
+            val parent = Array(verticesCount) { -1 }
+            val inQueue = BooleanArray(verticesCount)
+            val queue = ArrayDeque<Int>()
 
-            if (dist[sink] == Int.MAX_VALUE / 2) break // поток больше не может расти
+            distances[source] = 0
+            queue.addLast(source)
+            inQueue[source] = true
 
-            // Обновляем потенциалы
-            for (i in 0 until vertices) {
-                if (dist[i] < Int.MAX_VALUE / 2) {
-                    potential[i] += dist[i]
+            while (queue.isNotEmpty()) {
+                val current = queue.removeFirst()
+                inQueue[current] = false
+
+                for (edge in adj[current]) {
+                    if (edge.capacity > 0 && distances[edge.to] > distances[current] + edge.cost) {
+                        distances[edge.to] = distances[current] + edge.cost
+                        parent[edge.to] = edges.indexOf(edge)
+
+                        if (!inQueue[edge.to]) {
+                            queue.addLast(edge.to)
+                            inQueue[edge.to] = true
+                        }
+                    }
                 }
             }
 
-            // Определяем минимальную емкость по найденному пути
-            var currentFlow = Int.MAX_VALUE
-            var v = sink
-            while (v != source) {
-                val u = parent[v]
-                val edge = graph[u].first { it.to == v }
-                currentFlow = minOf(currentFlow, edge.capacity - edge.flow)
-                v = u
+            if (distances[sink] == Int.MAX_VALUE) break // Нет больше пути
+
+            // Определение увеличения потока через найдённый путь
+            var incrementFlow = flow - totalFlow
+            var cur = sink
+            while (cur != source) {
+                val edgeIndex = parent[cur]
+                val edge = edges[edgeIndex]
+                incrementFlow = Math.min(incrementFlow, edge.capacity)
+                cur = edge.from
             }
 
-            // Обновляем ребра с учетом добавленного потока
-            v = sink
-            while (v != source) {
-                val u = parent[v]
-                val edge = graph[u].first { it.to == v }
-                edge.flow += currentFlow
-
-                val backEdge = graph[v].first { it.to == u }
-                backEdge.flow -= currentFlow
-
-                totalCost += edge.cost * currentFlow
-                v = u
+            // Обновление рёбер
+            cur = sink
+            while (cur != source) {
+                val edgeIndex = parent[cur]
+                val edge = edges[edgeIndex]
+                edge.capacity -= incrementFlow
+                totalCost += incrementFlow * edge.cost
+                cur = edge.from
             }
-
-            totalFlow += currentFlow
+            totalFlow += incrementFlow
         }
 
         return Pair(totalFlow, totalCost)
     }
-
 
 
 //    addEdge(0, 1, 1, 1)
@@ -134,6 +92,6 @@ fun main(){
     addEdge(3, 2, 1, 2)
     addEdge(4, 5, 2, 2)
 
-    val (flow, cost) = minCostMaxFlow(0, 3, 2) // Из S в T
-    println("Максимальный поток: $flow, Минимальная стоимость: $cost")
+    val (maxFlow, minCost) = minCostFlow(0, 5, 2)
+    println("Максимальный поток: $maxFlow, Минимальная стоимость: $minCost")
 }

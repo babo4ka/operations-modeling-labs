@@ -7,14 +7,14 @@ fun main(){
     val edges = mutableListOf<Edge>()
     val adj = Array(verticesCount) { mutableListOf<Edge>() }
 
-    fun addEdge(from: Int, to: Int, capacity: Int, cost: Int) {
+    fun addEdge(from: Int, to: Int, capacity: Int, cost: Float) {
         val edge = Edge(from, to, capacity, cost)
         edges.add(edge)
         adj[from].add(edge)
     }
 
-    fun minCostFlow(source: Int, sink: Int, flow: Int): Pair<Int, Int> {
-        var totalCost = 0
+    fun minCostFlow(source: Int, sink: Int, flow: Int): Pair<Int, Float> {
+        var totalCost = 0.0f
         var totalFlow = 0
 
         while (totalFlow < flow) {
@@ -34,7 +34,7 @@ fun main(){
 
                 for (edge in adj[current]) {
                     if (edge.capacity > 0 && distances[edge.to] > distances[current] + edge.cost) {
-                        distances[edge.to] = distances[current] + edge.cost
+                        //distances[edge.to] = distances[current] + edge.cost
                         parent[edge.to] = edges.indexOf(edge)
 
                         if (!inQueue[edge.to]) {
@@ -84,13 +84,13 @@ fun main(){
 //    addEdge(6, 7, 1, 2)
 //    addEdge(7, 8, 1, 1)
 
-    addEdge(0, 1, 1, 1)
-    addEdge(0, 3, 1, 1)
-    addEdge(1, 2, 1, 2)
-    addEdge(1, 4, 2, 2)
-    addEdge(2, 5, 1, 1)
-    addEdge(3, 2, 1, 2)
-    addEdge(4, 5, 2, 2)
+    addEdge(0, 1, 1, 1.0f)
+    addEdge(0, 3, 1, 1.0f)
+    addEdge(1, 2, 1, 2.0f)
+    addEdge(1, 4, 2, 2.0f)
+    addEdge(2, 5, 1, 1.0f)
+    addEdge(3, 2, 1, 2.0f)
+    addEdge(4, 5, 2, 2.0f)
 
     val (maxFlow, minCost) = minCostFlow(0, 5, 2)
     println("Максимальный поток: $maxFlow, Минимальная стоимость: $minCost")

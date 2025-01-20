@@ -4,5 +4,5 @@ data class Edge(
     val from: Int,
     val to: Int,
     var capacity: Int,
-    var cost: Int
+    var cost: Float
 )

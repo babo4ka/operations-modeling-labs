@@ -73,16 +73,16 @@ fun main(){
     }
 
 
-//    addEdge(0, 1, 1, 1)
-//    addEdge(1, 2, 2, 1)
-//    addEdge(1, 4, 1, 1)
-//    addEdge(2, 3, 2, 2)
-//    addEdge(3, 6, 2, 2)
-//    addEdge(4, 5, 1, 2)
-//    addEdge(4, 6, 1, 2)
-//    addEdge(5, 8, 1, 1)
-//    addEdge(6, 7, 1, 2)
-//    addEdge(7, 8, 1, 1)
+//    addEdge(0, 1, 10, 1.0f)
+//    addEdge(0, 2, 5, 2.0f)
+//    addEdge(1, 2, 4, 3.0f)
+//    addEdge(1, 3, 8, 1.0f)
+//    addEdge(2, 3, 2, 2.0f)
+//    addEdge(2, 4, 7, 4.0f)
+//    addEdge(3, 4, 6, 1.0f)
+//    addEdge(3, 5, 3, 5.0f)
+//    addEdge(4, 5, 4, 2.0f)
+//    addEdge(7, 8, 1, 1.0f)
 
     addEdge(0, 1, 1, 1.0f)
     addEdge(0, 3, 1, 1.0f)

@@ -182,6 +182,10 @@ fun main(){
     addEdge(3, 2, 1, 2.0f)
     addEdge(4, 5, 2, 2.0f)
 
+
+
+
+
     println("Изначальная матрица: ")
     printMatrix()
 

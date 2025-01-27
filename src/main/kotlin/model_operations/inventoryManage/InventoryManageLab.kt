@@ -5,16 +5,17 @@ import kotlin.math.sqrt
 
 fun main(){
 
-    fun spendsOnWeek(){
 
-    }
-
-    val optimalOrderSize: (Double, Double, Double) -> Double = {k ,v ,s ->
-        sqrt((2 * k * v) )/ s
+    val getOptimalOrderSize: (Double, Double, Double) -> Double = { k, v, s ->
+        sqrt(((2 * k * v)  / s))
     }
 
     val spendsForWeek: (Double, Double, Double, Double) -> Double = {k, v, q, s ->
         (k * (v / q)) + (s * (q / 2))
+    }
+
+    val countPeriods: (Double, Double) -> Double = {q, v ->
+        q/v
     }
 
 
@@ -24,7 +25,16 @@ fun main(){
     val intensity = orderValue / 1
     val fullOrderPrice = priceForWeekPerOneFt * (orderValue/2) + fixedOrderPrice
 
-    val Qw = optimalOrderSize(fixedOrderPrice, intensity, priceForWeekPerOneFt)
+    val Qw = getOptimalOrderSize(fixedOrderPrice, intensity, priceForWeekPerOneFt)
     println(Qw)
 
+    val L = spendsForWeek(fixedOrderPrice, intensity, Qw, priceForWeekPerOneFt)
+    println(L)
+
+    val t = countPeriods(Qw, intensity)
+    println(t)
+
+
+    val difference = fullOrderPrice - L
+    println("$fullOrderPrice - $L = $difference")
 }

@@ -1,22 +1,27 @@
 package model_operations.inventoryManage
 
+import java.math.RoundingMode
 import kotlin.math.sqrt
 
 
 fun main(){
 
-
-    val getOptimalOrderSize: (Double, Double, Double) -> Double = { k, v, s ->
-        sqrt(((2 * k * v)  / s))
+    val round:(Double) -> Double = {num ->
+        num.toBigDecimal().setScale(2, RoundingMode.HALF_UP).toDouble()
     }
 
-    val spendsForWeek: (Double, Double, Double, Double) -> Double = {k, v, q, s ->
-        (k * (v / q)) + (s * (q / 2))
+
+    val getOptimalOrderSize: (Double, Double, Double) -> Double = { fixedOrderPrice, intensity, priceForWeekPerOneFt ->
+        sqrt(((2 * fixedOrderPrice * intensity)  / priceForWeekPerOneFt))
     }
 
-    val countPeriods: (Double, Double) -> Double = {q, v ->
-        q/v
+    val countSpendsForWeek: (Double, Double, Double, Double) -> Double = { fixedOrderPrice, intensity, orderSize, priceForWeekPerOneFt ->
+        (fixedOrderPrice * (intensity / orderSize)) + (priceForWeekPerOneFt * (orderSize / 2))
     }
+
+//    val countPeriods: (Double, Double) -> Double = {orderSize, intensity ->
+//        orderSize/intensity
+//    }
 
 
     val orderValue = 300.0
@@ -25,16 +30,18 @@ fun main(){
     val intensity = orderValue / 1
     val fullOrderPrice = priceForWeekPerOneFt * (orderValue/2) + fixedOrderPrice
 
-    val Qw = getOptimalOrderSize(fixedOrderPrice, intensity, priceForWeekPerOneFt)
-    println(Qw)
+    println("Текущие недельные затраты: ${round(fullOrderPrice)}")
 
-    val L = spendsForWeek(fixedOrderPrice, intensity, Qw, priceForWeekPerOneFt)
-    println(L)
+    val optimalOrderSize = getOptimalOrderSize(fixedOrderPrice, intensity, priceForWeekPerOneFt)
+    println("Оптимальный размер заказа: ${round(optimalOrderSize)}")
 
-    val t = countPeriods(Qw, intensity)
-    println(t)
+    val spendsForWeek = countSpendsForWeek(fixedOrderPrice, intensity, optimalOrderSize, priceForWeekPerOneFt)
+    println("Недельные затраты при оптимальном заказе: ${round(spendsForWeek)}")
+
+//    val periods = countPeriods(optimalOrderSize, intensity)
+//    println(round(periods))
 
 
-    val difference = fullOrderPrice - L
-    println("$fullOrderPrice - $L = $difference")
+    val difference = fullOrderPrice - spendsForWeek
+    println("Разница между текущими и оптимальными затратами: ${round(fullOrderPrice)} - ${round(spendsForWeek)} = ${round(difference)}")
 }
